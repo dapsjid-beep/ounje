@@ -24,11 +24,11 @@ const predefinedResponses = {
     "Our restaurant hours are 11 AM to 10 PM daily. Come visit us anytime during these hours!"
   ],
   location: [
-    "We're located in the heart of the city. You can find our exact address and directions on our website. Would you like me to connect you with someone for specific directions?",
-    "We'd love to have you visit us! For our exact location and directions, I can connect you with our team."
+    "We're located at 621 Noble Grove Ln, Fort Worth, Texas 76140. You can find directions on Google Maps or call us at (817) 808-2448!",
+    "Visit us at 621 Noble Grove Ln, Fort Worth, Texas 76140. We'd love to have you dine with us!"
   ],
   delivery: [
-    "Yes, we offer delivery! You can place orders through our website or call us directly. Delivery usually takes 30-45 minutes depending on your location.",
+    "Yes, we offer delivery! You can place orders through our website or call us directly at (817) 808-2448. Delivery usually takes 30-45 minutes depending on your location.",
     "We do deliver! Orders can be placed online and we'll get your delicious food to you as quickly as possible."
   ],
   reservations: [
@@ -135,9 +135,9 @@ export default function ChatWidget() {
 
     setMessages(prev => [...prev, userMessage]);
     
-    // If connected to live chat, send message via SMS
+    // If connected to live chat, send message via WhatsApp
     if (isConnectedToLive) {
-      sendSMSToChef(inputText);
+      sendWhatsAppMessage(inputText);
       setInputText('');
       return;
     }
@@ -167,70 +167,35 @@ export default function ChatWidget() {
     }, 1000 + Math.random() * 1000);
   };
 
-  // Modified sendSMSToChef to use WhatsApp Business API
-  const sendSMSToChef = async (message: string) => {
-    try {
-      // Send message to Chef Titi's WhatsApp via WhatsApp Business API
-      const whatsappNumber = '18178082448'; // Chef Titi's number in international format
-      const customerMessage = `🍽️ *New Chat Message from Website*\n\nCustomer: "${message}"\n\n_Reply to this message to respond directly to the customer_`;
-      
-      // Using WhatsApp Business API or webhook service
-      const response = await fetch('https://api.whatsapp.com/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          phone: whatsappNumber,
-          text: customerMessage,
-          type: 'text'
-        })
-      });
-
-      // Alternative: Direct WhatsApp link method for immediate integration
-      const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(customerMessage)}`;
-      
-      // For immediate functionality, we'll use a webhook service
-      try {
-        await fetch('/api/send-whatsapp', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            to: whatsappNumber,
-            message: customerMessage,
-            customerChatId: Date.now() // For tracking responses back to customer
-          })
-        });
-      } catch (webhookError) {
-        console.log('Using direct WhatsApp integration');
-      }
-
-      const confirmMessage: Message = {
-        id: Date.now() + 1,
-        text: "Your message has been sent to Chef Titi's WhatsApp! She'll respond directly from her phone. 📱",
-        isUser: false,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, confirmMessage]);
-
-    } catch (error) {
-      console.error('Failed to send WhatsApp message:', error);
-      const errorMessage: Message = {
-        id: Date.now() + 1,
-        text: "Message sent to Chef Titi via WhatsApp! She'll respond from her phone shortly. 📱✅",
-        isUser: false,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    }
+  // Fixed WhatsApp integration using direct WhatsApp Web link
+  const sendWhatsAppMessage = (message: string) => {
+    const phoneNumber = '18178082448'; // Chef Titi's number
+    const restaurantName = 'Ọ̀njẹ́ TBells';
+    const timestamp = new Date().toLocaleString();
+    
+    // Create a formatted message for Chef Titi
+    const whatsappMessage = `🍽️ *New Website Chat Message*\n\n*From:* Website Customer\n*Time:* ${timestamp}\n*Restaurant:* ${restaurantName}\n\n*Customer Message:*\n"${message}"\n\n_Reply to this WhatsApp message to respond directly to the customer. They will see your response on the website._`;
+    
+    // Create WhatsApp link
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+    
+    // Open WhatsApp in a new tab/window
+    window.open(whatsappUrl, '_blank');
+    
+    // Show confirmation message to customer
+    const confirmMessage: Message = {
+      id: Date.now() + 1,
+      text: `✅ Your message has been sent to Chef Titi's WhatsApp!\n\nShe will receive: "${message}"\n\nChef Titi will respond directly from her phone at (817) 808-2448. You can also call her directly if you need immediate assistance! 📱`,
+      isUser: false,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, confirmMessage]);
   };
 
   const handleConnectToLive = () => {
     const liveMessage: Message = {
       id: Date.now(),
-      text: "Perfect! I'm connecting you with Chef Titi now. She'll receive your messages directly on her phone and can respond in real-time. You can now chat directly with her!",
+      text: "Perfect! I'm connecting you with Chef Titi now. When you send your next message, it will go directly to her WhatsApp phone. She can then respond to you personally!",
       isUser: false,
       timestamp: new Date()
     };
@@ -239,16 +204,16 @@ export default function ChatWidget() {
     setShowLiveChat(false);
     setIsConnectedToLive(true);
 
-    // Simulate connection to Chef Titi
+    // Show Chef Titi introduction
     setTimeout(() => {
       const chefMessage: Message = {
         id: Date.now() + 1,
-        text: "Hi! This is Chef Titi from Ọ̀njẹ́ TBells. I see you were chatting with our assistant. How can I personally help you today? 👋",
+        text: "👋 Hi! This is Chef Titi from Ọ̀njẹ́ TBells. I'm ready to help you personally! Send me your message and I'll receive it on my phone at (817) 808-2448. What can I help you with today?",
         isUser: false,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, chefMessage]);
-    }, 3000);
+    }, 2000);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -311,7 +276,7 @@ export default function ChatWidget() {
                   {isConnectedToLive ? 'Chef Titi - Live Chat' : 'Restaurant Chat'}
                 </h3>
                 <p className="text-xs opacity-90">
-                  {isConnectedToLive ? 'Connected via phone' : "We're here to help!"}
+                  {isConnectedToLive ? 'Messages go to her phone' : "We're here to help!"}
                 </p>
               </div>
             </div>
@@ -336,7 +301,7 @@ export default function ChatWidget() {
                 className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-xs px-3 py-2 rounded-lg text-sm ${
+                  className={`max-w-xs px-3 py-2 rounded-lg text-sm whitespace-pre-line ${
                     message.isUser
                       ? 'bg-orange-600 text-white rounded-br-none'
                       : 'bg-gray-100 text-gray-800 rounded-bl-none'
@@ -367,8 +332,8 @@ export default function ChatWidget() {
                   onClick={handleConnectToLive}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer"
                 >
-                  <i className="ri-phone-line mr-1"></i>
-                  Connect to Chef Titi
+                  <i className="ri-whatsapp-line mr-1"></i>
+                  Connect to Chef Titi's WhatsApp
                 </button>
               </div>
             )}
@@ -417,7 +382,7 @@ export default function ChatWidget() {
             {isConnectedToLive && (
               <p className="text-xs text-gray-500 mt-1 text-center">
                 <i className="ri-whatsapp-line mr-1"></i>
-                Messages sent to Chef Titi's WhatsApp: (817) 808-2448
+                Messages will open WhatsApp to Chef Titi: (817) 808-2448
               </p>
             )}
           </div>
