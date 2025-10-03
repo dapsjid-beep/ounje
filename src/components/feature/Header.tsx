@@ -83,11 +83,11 @@ export default function Header() {
             <Link to="/" className="flex items-center">
               <img 
                 src="https://static.readdy.ai/image/498db38d60e5e09c4bebbb1ed11634a9/f6174c9791dc49171efbe4263a41832e.jfif" 
-                alt="Ọ̀njẹ́ TBells Logo" 
+                alt="Ọ̀unjẹ́ TBells Logo" 
                 className="w-8 h-8 md:w-10 md:h-10 object-cover rounded-full mr-2 md:mr-3"
               />
               <span className="text-lg md:text-2xl font-bold text-orange-600" style={{ fontFamily: '"Pacifico", serif' }}>
-                Ọ̀njẹ́ TBells
+                Ọ̀unjẹ́ TBells
               </span>
             </Link>
 

@@ -13,7 +13,7 @@ export default function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              About Ọ̀njẹ́ TBells
+              About Ọ̀unjẹ́ TBells
             </h1>
             <p className="text-xl text-gray-600 leading-relaxed">
               Bringing authentic African flavors to your table with passion, tradition, and love
@@ -30,13 +30,13 @@ export default function AboutPage() {
               <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Story</h2>
               <div className="space-y-4 text-gray-600">
                 <p>
-                  Ọ̀njẹ́ TBells was born from a simple yet powerful vision: to share the incredible diversity and richness of African cuisine with food lovers everywhere. Our journey began in 2020 when our founder, Chef Titi, noticed the lack of authentic African restaurants in the area.
+                  Ọ̀unjẹ́ TBells was born from a simple yet powerful vision: to share the incredible diversity and richness of African cuisine with food lovers everywhere. Our journey began in 2020 when our founder, Chef Titi, noticed the lack of authentic African restaurants in the area.
                 </p>
                 <p>
                   Growing up in Lagos, Nigeria, Chef Titi learned the art of cooking from her grandmother, who passed down recipes that had been in the family for generations. These weren't just recipes – they were stories, traditions, and a connection to heritage that transcended borders.
                 </p>
                 <p>
-                  Today, Ọ̀njẹ́ TBells serves authentic dishes from across the African continent, from the spicy jollof rice of West Africa to the aromatic tagines of North Africa, all prepared with the freshest ingredients and traditional cooking methods.
+                  Today, Ọ̀unjẹ́ TBells serves authentic dishes from across the African continent, from the spicy jollof rice of West Africa to the aromatic tagines of North Africa, all prepared with the freshest ingredients and traditional cooking methods.
                 </p>
               </div>
             </div>

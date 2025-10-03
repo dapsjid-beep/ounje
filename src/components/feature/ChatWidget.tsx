@@ -1,71 +1,41 @@
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  import.meta.env.VITE_PUBLIC_SUPABASE_URL,
+  import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY
+);
 
 interface Message {
-  id: number;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
+  id: string;
+  sender_type: 'customer' | 'chef';
+  sender_name: string;
+  message: string;
+  created_at: string;
 }
 
-const predefinedResponses = {
-  greeting: [
-    "Hello! Welcome to our Nigerian restaurant! How can I help you today?",
-    "Hi there! Thanks for visiting us. What can I assist you with?",
-    "Welcome! I'm here to help with any questions about our menu or services."
-  ],
-  menu: [
-    "We offer authentic Nigerian cuisine and international dishes! You can browse our full menu by clicking the Menu button above. What type of food are you interested in?",
-    "Our specialties include Jollof Rice, Egusi Soup, Suya, and many grilled options. Would you like recommendations for a specific category?",
-    "We have Nigerian dishes, Intercontinental cuisine, and Grilled Specialties. What sounds good to you today?"
-  ],
-  hours: [
-    "We're open Monday-Sunday from 11:00 AM to 10:00 PM. We're here to serve you delicious food every day!",
-    "Our restaurant hours are 11 AM to 10 PM daily. Come visit us anytime during these hours!"
-  ],
-  location: [
-    "We're located at 621 Noble Grove Ln, Fort Worth, Texas 76140. You can find directions on Google Maps or call us at (817) 808-2448!",
-    "Visit us at 621 Noble Grove Ln, Fort Worth, Texas 76140. We'd love to have you dine with us!"
-  ],
-  delivery: [
-    "Yes, we offer delivery! You can place orders through our website or call us directly at (817) 808-2448. Delivery usually takes 30-45 minutes depending on your location.",
-    "We do deliver! Orders can be placed online and we'll get your delicious food to you as quickly as possible."
-  ],
-  reservations: [
-    "We accept reservations! I can connect you with our team to book a table. What date and time were you thinking?",
-    "Absolutely! We'd be happy to reserve a table for you. Let me connect you with someone who can help with booking."
-  ],
-  spicy: [
-    "All our dishes can be customized for spice level - from Mild to Extra Hot! We'll make it just right for your taste preferences.",
-    "We offer 4 spice levels: Mild, Medium, Hot, and Extra Hot. Our chefs can adjust any dish to your preferred heat level!"
-  ],
-  vegetarian: [
-    "Yes! We have several vegetarian and vegan options including our Mediterranean Quinoa Bowl, Grilled Vegetables, and traditional Nigerian vegetable dishes.",
-    "We definitely cater to vegetarians! Many of our dishes can be made vegetarian, and we have dedicated plant-based options."
-  ],
-  default: [
-    "That's a great question! Let me connect you with Chef Titi who can give you the most accurate information.",
-    "I'd be happy to help with that! For the best assistance, let me connect you with Chef Titi from our team.",
-    "Thanks for asking! Chef Titi can provide you with detailed information about that. Would you like me to connect you now?"
-  ]
-};
+interface Conversation {
+  id: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  status: string;
+}
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      text: "Hello! Welcome to our Nigerian restaurant! How can I help you today?",
-      isUser: false,
-      timestamp: new Date()
-    }
-  ]);
-  const [inputText, setInputText] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [showLiveChat, setShowLiveChat] = useState(false);
-  const [isConnectedToLive, setIsConnectedToLive] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [customerInfo, setCustomerInfo] = useState({
+    name: '',
+    email: '',
+    phone: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -75,315 +45,252 @@ export default function ChatWidget() {
     scrollToBottom();
   }, [messages]);
 
+  // Subscribe to real-time messages
   useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isOpen]);
+    if (!conversation?.id) return;
 
-  const getRandomResponse = (responses: string[]) => {
-    return responses[Math.floor(Math.random() * responses.length)];
-  };
+    const channel = supabase
+      .channel(`chat_${conversation.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `conversation_id=eq.${conversation.id}`,
+        },
+        (payload) => {
+          const newMessage = payload.new as Message;
+          setMessages(prev => [...prev, newMessage]);
+        }
+      )
+      .subscribe();
 
-  const analyzeMessage = (message: string): string => {
-    const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-      return getRandomResponse(predefinedResponses.greeting);
-    }
-    
-    if (lowerMessage.includes('menu') || lowerMessage.includes('food') || lowerMessage.includes('dish') || lowerMessage.includes('eat')) {
-      return getRandomResponse(predefinedResponses.menu);
-    }
-    
-    if (lowerMessage.includes('hour') || lowerMessage.includes('open') || lowerMessage.includes('close') || lowerMessage.includes('time')) {
-      return getRandomResponse(predefinedResponses.hours);
-    }
-    
-    if (lowerMessage.includes('location') || lowerMessage.includes('address') || lowerMessage.includes('where') || lowerMessage.includes('direction')) {
-      return getRandomResponse(predefinedResponses.location);
-    }
-    
-    if (lowerMessage.includes('delivery') || lowerMessage.includes('deliver') || lowerMessage.includes('order online')) {
-      return getRandomResponse(predefinedResponses.delivery);
-    }
-    
-    if (lowerMessage.includes('reservation') || lowerMessage.includes('book') || lowerMessage.includes('table') || lowerMessage.includes('reserve')) {
-      return getRandomResponse(predefinedResponses.reservations);
-    }
-    
-    if (lowerMessage.includes('spicy') || lowerMessage.includes('spice') || lowerMessage.includes('hot') || lowerMessage.includes('mild')) {
-      return getRandomResponse(predefinedResponses.spicy);
-    }
-    
-    if (lowerMessage.includes('vegetarian') || lowerMessage.includes('vegan') || lowerMessage.includes('plant') || lowerMessage.includes('veggie')) {
-      return getRandomResponse(predefinedResponses.vegetarian);
-    }
-    
-    return getRandomResponse(predefinedResponses.default);
-  };
-
-  const handleSendMessage = () => {
-    if (!inputText.trim()) return;
-
-    const userMessage: Message = {
-      id: Date.now(),
-      text: inputText,
-      isUser: true,
-      timestamp: new Date()
+    return () => {
+      supabase.removeChannel(channel);
     };
+  }, [conversation?.id]);
 
-    setMessages(prev => [...prev, userMessage]);
-    
-    // If connected to live chat, send message via WhatsApp
-    if (isConnectedToLive) {
-      sendWhatsAppMessage(inputText);
-      setInputText('');
+  const startChat = async () => {
+    if (!customerInfo.name || !customerInfo.email) {
+      alert('Please provide your name and email to start chatting.');
       return;
     }
 
-    setInputText('');
-    setIsTyping(true);
+    setIsLoading(true);
+    try {
+      // Create new conversation
+      const { data: newConversation, error: convError } = await supabase
+        .from('chat_conversations')
+        .insert({
+          customer_name: customerInfo.name,
+          customer_email: customerInfo.email,
+          customer_phone: customerInfo.phone,
+          status: 'active'
+        })
+        .select()
+        .single();
 
-    // Simulate bot response delay
-    setTimeout(() => {
-      const botResponse = analyzeMessage(inputText);
-      const botMessage: Message = {
-        id: Date.now() + 1,
-        text: botResponse,
-        isUser: false,
-        timestamp: new Date()
-      };
+      if (convError) throw convError;
 
-      setMessages(prev => [...prev, botMessage]);
-      setIsTyping(false);
+      setConversation(newConversation);
+      setIsConnected(true);
 
-      // Check if we should offer live chat
-      if (botResponse.includes('connect you with')) {
-        setTimeout(() => {
-          setShowLiveChat(true);
-        }, 1000);
-      }
-    }, 1000 + Math.random() * 1000);
-  };
+      // Send welcome message
+      const welcomeMessage = `Hello ${customerInfo.name}! Welcome to Chef Titi's Kitchen. How can I help you today?`;
+      
+      const { error: msgError } = await supabase
+        .from('chat_messages')
+        .insert({
+          conversation_id: newConversation.id,
+          sender_type: 'chef',
+          sender_name: 'Chef Titi',
+          message: welcomeMessage
+        });
 
-  // Fixed WhatsApp integration using direct WhatsApp Web link
-  const sendWhatsAppMessage = (message: string) => {
-    const phoneNumber = '18178082448'; // Chef Titi's number
-    const restaurantName = 'Ọ̀njẹ́ TBells';
-    const timestamp = new Date().toLocaleString();
-    
-    // Create a formatted message for Chef Titi
-    const whatsappMessage = `🍽️ *New Website Chat Message*\n\n*From:* Website Customer\n*Time:* ${timestamp}\n*Restaurant:* ${restaurantName}\n\n*Customer Message:*\n"${message}"\n\n_Reply to this WhatsApp message to respond directly to the customer. They will see your response on the website._`;
-    
-    // Create WhatsApp link
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
-    
-    // Open WhatsApp in a new tab/window
-    window.open(whatsappUrl, '_blank');
-    
-    // Show confirmation message to customer
-    const confirmMessage: Message = {
-      id: Date.now() + 1,
-      text: `✅ Your message has been sent to Chef Titi's WhatsApp!\n\nShe will receive: "${message}"\n\nChef Titi will respond directly from her phone at (817) 808-2448. You can also call her directly if you need immediate assistance! 📱`,
-      isUser: false,
-      timestamp: new Date()
-    };
-    setMessages(prev => [...prev, confirmMessage]);
-  };
+      if (msgError) throw msgError;
 
-  const handleConnectToLive = () => {
-    const liveMessage: Message = {
-      id: Date.now(),
-      text: "Perfect! I'm connecting you with Chef Titi now. When you send your next message, it will go directly to her WhatsApp phone. She can then respond to you personally!",
-      isUser: false,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, liveMessage]);
-    setShowLiveChat(false);
-    setIsConnectedToLive(true);
-
-    // Show Chef Titi introduction
-    setTimeout(() => {
-      const chefMessage: Message = {
-        id: Date.now() + 1,
-        text: "👋 Hi! This is Chef Titi from Ọ̀njẹ́ TBells. I'm ready to help you personally! Send me your message and I'll receive it on my phone at (817) 808-2448. What can I help you with today?",
-        isUser: false,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, chefMessage]);
-    }, 2000);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSendMessage();
+    } catch (error) {
+      console.error('Error starting chat:', error);
+      alert('Failed to start chat. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const quickQuestions = [
-    "What's on the menu?",
-    "Do you deliver?",
-    "What are your hours?",
-    "Make a reservation",
-    "Vegetarian options?"
-  ];
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !conversation) return;
 
-  const handleQuickQuestion = (question: string) => {
-    setInputText(question);
-    setTimeout(() => handleSendMessage(), 100);
+    const messageText = newMessage.trim();
+    setNewMessage('');
+
+    try {
+      // Add customer message
+      const { error: msgError } = await supabase
+        .from('chat_messages')
+        .insert({
+          conversation_id: conversation.id,
+          sender_type: 'customer',
+          sender_name: customerInfo.name,
+          message: messageText
+        });
+
+      if (msgError) throw msgError;
+
+      // Send SMS notification to Chef Titi
+      await fetch(`${import.meta.env.VITE_PUBLIC_SUPABASE_URL}/functions/v1/send-sms-notification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: customerInfo.name,
+          message: messageText,
+          conversationId: conversation.id
+        })
+      });
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('Failed to send message. Please try again.');
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
   };
 
   return (
     <>
       {/* Chat Button */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-14 h-14 bg-orange-600 hover:bg-orange-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center cursor-pointer group"
-        >
-          {isOpen ? (
-            <i className="ri-close-line text-xl"></i>
-          ) : (
-            <>
-              <i className="ri-chat-3-line text-xl group-hover:scale-110 transition-transform"></i>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
-            </>
-          )}
-        </button>
+      <button
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-6 right-6 bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-full shadow-lg transition-all duration-300 z-50 cursor-pointer"
+      >
+        <i className="ri-message-3-line text-xl"></i>
+      </button>
 
-        {/* Tooltip */}
-        {!isOpen && (
-          <div className="absolute bottom-full right-0 mb-2 px-3 py-1 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-            Chat with Chef Titi
-            <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-          </div>
-        )}
-      </div>
-
-      {/* Chat Window */}
+      {/* Chat Modal */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-80 h-96 bg-white rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden border border-gray-200">
-          {/* Header */}
-          <div className="bg-orange-600 text-white p-4 flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mr-3">
-                <i className="ri-restaurant-line text-sm"></i>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md h-96 flex flex-col">
+            {/* Header */}
+            <div className="bg-orange-500 text-white p-4 rounded-t-lg flex items-center justify-between">
+              <div className="flex items-center">
+                <i className="ri-restaurant-line text-xl mr-2"></i>
+                <div>
+                  <h3 className="font-semibold">Chef Titi's Kitchen</h3>
+                  <p className="text-orange-100 text-sm">
+                    {isConnected ? 'Live Chat' : 'Start a conversation'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-sm">
-                  {isConnectedToLive ? 'Chef Titi - Live Chat' : 'Restaurant Chat'}
-                </h3>
-                <p className="text-xs opacity-90">
-                  {isConnectedToLive ? 'Messages go to her phone' : "We're here to help!"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              {isConnectedToLive && (
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              )}
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-6 h-6 flex items-center justify-center hover:bg-orange-500 rounded cursor-pointer"
+                className="text-white hover:text-orange-200 cursor-pointer"
               >
-                <i className="ri-close-line text-sm"></i>
+                <i className="ri-close-line text-xl"></i>
               </button>
             </div>
-          </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-xs px-3 py-2 rounded-lg text-sm whitespace-pre-line ${
-                    message.isUser
-                      ? 'bg-orange-600 text-white rounded-br-none'
-                      : 'bg-gray-100 text-gray-800 rounded-bl-none'
-                  }`}
-                >
-                  {message.text}
-                </div>
-              </div>
-            ))}
-
-            {/* Typing Indicator */}
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 text-gray-800 px-3 py-2 rounded-lg rounded-bl-none text-sm">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Live Chat Option */}
-            {showLiveChat && (
-              <div className="flex justify-center">
-                <button
-                  onClick={handleConnectToLive}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer"
-                >
-                  <i className="ri-whatsapp-line mr-1"></i>
-                  Connect to Chef Titi's WhatsApp
-                </button>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Quick Questions */}
-          {messages.length === 1 && !isConnectedToLive && (
-            <div className="px-4 pb-2">
-              <p className="text-xs text-gray-500 mb-2">Quick questions:</p>
-              <div className="flex flex-wrap gap-1">
-                {quickQuestions.map((question, index) => (
+            {!isConnected ? (
+              /* Customer Info Form */
+              <div className="p-4 flex-1">
+                <h4 className="font-semibold mb-4">Let's get started!</h4>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Your name *"
+                    value={customerInfo.name}
+                    onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    required
+                  />
+                  <input
+                    type="email"
+                    placeholder="Your email *"
+                    value={customerInfo.email}
+                    onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    required
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Your phone (optional)"
+                    value={customerInfo.phone}
+                    onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
                   <button
-                    key={index}
-                    onClick={() => handleQuickQuestion(question)}
-                    className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-xs transition-colors cursor-pointer"
+                    onClick={startChat}
+                    disabled={isLoading || !customerInfo.name || !customerInfo.email}
+                    className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white py-2 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
                   >
-                    {question}
+                    {isLoading ? 'Starting Chat...' : 'Start Chat with Chef Titi'}
                   </button>
-                ))}
+                </div>
+                <div className="mt-4 text-xs text-gray-500">
+                  <p>✓ Chat directly on our website</p>
+                  <p>✓ Chef Titi will respond from her phone</p>
+                  <p>✓ Real-time conversation</p>
+                </div>
               </div>
-            </div>
-          )}
+            ) : (
+              /* Chat Interface */
+              <>
+                {/* Messages */}
+                <div className="flex-1 p-4 overflow-y-auto space-y-3">
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.sender_type === 'customer' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-xs px-3 py-2 rounded-lg ${
+                          message.sender_type === 'customer'
+                            ? 'bg-orange-500 text-white'
+                            : 'bg-gray-200 text-gray-800'
+                        }`}
+                      >
+                        <p className="text-sm">{message.message}</p>
+                        <p
+                          className={`text-xs mt-1 ${
+                            message.sender_type === 'customer' ? 'text-orange-100' : 'text-gray-500'
+                          }`}
+                        >
+                          {new Date(message.created_at).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
 
-          {/* Input */}
-          <div className="p-4 border-t border-gray-200">
-            <div className="flex items-center space-x-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder={isConnectedToLive ? "Message Chef Titi..." : "Type your message..."}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={!inputText.trim()}
-                className="w-8 h-8 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 text-white rounded-full flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <i className="ri-send-plane-line text-sm"></i>
-              </button>
-            </div>
-            {isConnectedToLive && (
-              <p className="text-xs text-gray-500 mt-1 text-center">
-                <i className="ri-whatsapp-line mr-1"></i>
-                Messages will open WhatsApp to Chef Titi: (817) 808-2448
-              </p>
+                {/* Message Input */}
+                <div className="border-t p-4">
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Type your message..."
+                      className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                    <button
+                      onClick={sendMessage}
+                      disabled={!newMessage.trim()}
+                      className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      <i className="ri-send-plane-line"></i>
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Chef Titi will be notified and respond shortly
+                  </p>
+                </div>
+              </>
             )}
           </div>
         </div>

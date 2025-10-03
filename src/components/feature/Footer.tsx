@@ -7,7 +7,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <h3 className="text-2xl font-bold text-orange-500 mb-4" style={{ fontFamily: '"Pacifico", serif' }}>
-              Ọ̀njẹ́ TBells
+              Ọ̀unjẹ́ TBells
             </h3>
             <p className="text-gray-300 mb-4">
               Authentic African cuisine delivered to your doorstep. Experience the rich flavors and traditions of Africa.
@@ -66,7 +66,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-200 pt-8 text-center text-sm text-gray-600">
-          <p>© 2024 Ọ̀njẹ́ TBells. All rights reserved. | 001 Tech</p>
+          <p>© 2024 Ọ̀unjẹ́ TBells. All rights reserved. | 001 Tech</p>
         </div>
       </div>
     </footer>
