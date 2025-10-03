@@ -191,7 +191,7 @@ export default function AboutPage() {
               View Our Menu
             </a>
             <a 
-              href="tel:+15551234567" 
+              href="tel:+18178082448" 
               className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-orange-600 transition-colors cursor-pointer"
             >
               Call Us Now

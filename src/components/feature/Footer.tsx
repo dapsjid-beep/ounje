@@ -50,7 +50,7 @@ export default function Footer() {
             <div className="space-y-3">
               <div className="flex items-center">
                 <i className="ri-phone-line text-orange-500 mr-3"></i>
-                <span className="text-gray-300">+1 (555) 123-4567</span>
+                <span className="text-gray-300">+1 (817) 808-2448</span>
               </div>
               <div className="flex items-center">
                 <i className="ri-mail-line text-orange-500 mr-3"></i>
@@ -58,10 +58,11 @@ export default function Footer() {
               </div>
               <div className="flex items-start">
                 <i className="ri-map-pin-line text-orange-500 mr-3 mt-1"></i>
-                <span className="text-gray-300">123 Flavor Street<br />Foodie District, FD 12345</span>
+                <span className="text-gray-300">621 Noble Grove Ln<br />Fort Worth, Texas 76140</span>
               </div>
             </div>
           </div>
+
         </div>
 
         <div className="border-t border-gray-200 pt-8 text-center text-sm text-gray-600">

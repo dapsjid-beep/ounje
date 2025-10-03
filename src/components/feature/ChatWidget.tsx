@@ -311,7 +311,7 @@ export default function ChatWidget() {
                   {isConnectedToLive ? 'Chef Titi - Live Chat' : 'Restaurant Chat'}
                 </h3>
                 <p className="text-xs opacity-90">
-                  {isConnectedToLive ? 'Connected via phone' : 'We\'re here to help!'}
+                  {isConnectedToLive ? 'Connected via phone' : "We're here to help!"}
                 </p>
               </div>
             </div>
