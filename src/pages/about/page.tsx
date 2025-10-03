@@ -30,10 +30,10 @@ export default function AboutPage() {
               <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Story</h2>
               <div className="space-y-4 text-gray-600">
                 <p>
-                  Ọ̀njẹ́ TBells was born from a simple yet powerful vision: to share the incredible diversity and richness of African cuisine with food lovers everywhere. Our journey began in 2020 when our founder, Chef Amara, noticed the lack of authentic African restaurants in the area.
+                  Ọ̀njẹ́ TBells was born from a simple yet powerful vision: to share the incredible diversity and richness of African cuisine with food lovers everywhere. Our journey began in 2020 when our founder, Chef Titi, noticed the lack of authentic African restaurants in the area.
                 </p>
                 <p>
-                  Growing up in Lagos, Nigeria, Chef Amara learned the art of cooking from her grandmother, who passed down recipes that had been in the family for generations. These weren't just recipes – they were stories, traditions, and a connection to heritage that transcended borders.
+                  Growing up in Lagos, Nigeria, Chef Titi learned the art of cooking from her grandmother, who passed down recipes that had been in the family for generations. These weren't just recipes – they were stories, traditions, and a connection to heritage that transcended borders.
                 </p>
                 <p>
                   Today, Ọ̀njẹ́ TBells serves authentic dishes from across the African continent, from the spicy jollof rice of West Africa to the aromatic tagines of North Africa, all prepared with the freshest ingredients and traditional cooking methods.
@@ -101,11 +101,11 @@ export default function AboutPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="text-center">
                 <img 
-                  src="https://readdy.ai/api/search-image?query=Professional%20portrait%20of%20African%20female%20chef%20in%20white%20chef%20uniform%2C%20confident%20smile%2C%20modern%20restaurant%20kitchen%20background%2C%20professional%20headshot%20style%2C%20warm%20lighting&width=300&height=300&seq=chef-amara&orientation=squarish"
-                  alt="Chef Amara"
-                  className="w-48 h-48 object-cover rounded-full mx-auto mb-4 shadow-lg"
+                  src="https://static.readdy.ai/image/498db38d60e5e09c4bebbb1ed11634a9/96d16bfa42d44abdd96c42b5665b934f.jfif"
+                  alt="Chef Titi"
+                  className="w-48 h-48 object-cover rounded-full mx-auto mb-4 shadow-lg border-4 border-orange-600"
                 />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Chef Amara Okafor</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Chef Titi Bello</h3>
                 <p className="text-orange-600 mb-3">Head Chef & Founder</p>
                 <p className="text-gray-600 text-sm">
                   25+ years of culinary experience specializing in West African cuisine. Trained in Lagos and London.

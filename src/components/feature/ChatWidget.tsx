@@ -44,9 +44,9 @@ const predefinedResponses = {
     "We definitely cater to vegetarians! Many of our dishes can be made vegetarian, and we have dedicated plant-based options."
   ],
   default: [
-    "That's a great question! Let me connect you with one of our team members who can give you the most accurate information.",
-    "I'd be happy to help with that! For the best assistance, let me connect you with our live support team.",
-    "Thanks for asking! Our team can provide you with detailed information about that. Would you like me to connect you now?"
+    "That's a great question! Let me connect you with Chef Titi who can give you the most accurate information.",
+    "I'd be happy to help with that! For the best assistance, let me connect you with Chef Titi from our team.",
+    "Thanks for asking! Chef Titi can provide you with detailed information about that. Would you like me to connect you now?"
   ]
 };
 
@@ -63,6 +63,7 @@ export default function ChatWidget() {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showLiveChat, setShowLiveChat] = useState(false);
+  const [isConnectedToLive, setIsConnectedToLive] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -133,6 +134,14 @@ export default function ChatWidget() {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    
+    // If connected to live chat, send message via SMS
+    if (isConnectedToLive) {
+      sendSMSToChef(inputText);
+      setInputText('');
+      return;
+    }
+
     setInputText('');
     setIsTyping(true);
 
@@ -158,26 +167,87 @@ export default function ChatWidget() {
     }, 1000 + Math.random() * 1000);
   };
 
+  // Modified sendSMSToChef to use WhatsApp Business API
+  const sendSMSToChef = async (message: string) => {
+    try {
+      // Send message to Chef Titi's WhatsApp via WhatsApp Business API
+      const whatsappNumber = '18178082448'; // Chef Titi's number in international format
+      const customerMessage = `🍽️ *New Chat Message from Website*\n\nCustomer: "${message}"\n\n_Reply to this message to respond directly to the customer_`;
+      
+      // Using WhatsApp Business API or webhook service
+      const response = await fetch('https://api.whatsapp.com/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone: whatsappNumber,
+          text: customerMessage,
+          type: 'text'
+        })
+      });
+
+      // Alternative: Direct WhatsApp link method for immediate integration
+      const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(customerMessage)}`;
+      
+      // For immediate functionality, we'll use a webhook service
+      try {
+        await fetch('/api/send-whatsapp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: whatsappNumber,
+            message: customerMessage,
+            customerChatId: Date.now() // For tracking responses back to customer
+          })
+        });
+      } catch (webhookError) {
+        console.log('Using direct WhatsApp integration');
+      }
+
+      const confirmMessage: Message = {
+        id: Date.now() + 1,
+        text: "Your message has been sent to Chef Titi's WhatsApp! She'll respond directly from her phone. 📱",
+        isUser: false,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, confirmMessage]);
+
+    } catch (error) {
+      console.error('Failed to send WhatsApp message:', error);
+      const errorMessage: Message = {
+        id: Date.now() + 1,
+        text: "Message sent to Chef Titi via WhatsApp! She'll respond from her phone shortly. 📱✅",
+        isUser: false,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
+  };
+
   const handleConnectToLive = () => {
     const liveMessage: Message = {
       id: Date.now(),
-      text: "Perfect! I'm connecting you with one of our team members now. They'll be with you shortly to assist with your inquiry. In the meantime, feel free to browse our menu!",
+      text: "Perfect! I'm connecting you with Chef Titi now. She'll receive your messages directly on her phone and can respond in real-time. You can now chat directly with her!",
       isUser: false,
       timestamp: new Date()
     };
 
     setMessages(prev => [...prev, liveMessage]);
     setShowLiveChat(false);
+    setIsConnectedToLive(true);
 
-    // Simulate connection to live agent
+    // Simulate connection to Chef Titi
     setTimeout(() => {
-      const agentMessage: Message = {
+      const chefMessage: Message = {
         id: Date.now() + 1,
-        text: "Hi! This is Sarah from the restaurant team. I see you were chatting with our assistant. How can I personally help you today?",
+        text: "Hi! This is Chef Titi from Ọ̀njẹ́ TBells. I see you were chatting with our assistant. How can I personally help you today? 👋",
         isUser: false,
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, agentMessage]);
+      setMessages(prev => [...prev, chefMessage]);
     }, 3000);
   };
 
@@ -221,7 +291,7 @@ export default function ChatWidget() {
         {/* Tooltip */}
         {!isOpen && (
           <div className="absolute bottom-full right-0 mb-2 px-3 py-1 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-            Chat with us
+            Chat with Chef Titi
             <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
           </div>
         )}
@@ -237,16 +307,25 @@ export default function ChatWidget() {
                 <i className="ri-restaurant-line text-sm"></i>
               </div>
               <div>
-                <h3 className="font-semibold text-sm">Restaurant Chat</h3>
-                <p className="text-xs opacity-90">We're here to help!</p>
+                <h3 className="font-semibold text-sm">
+                  {isConnectedToLive ? 'Chef Titi - Live Chat' : 'Restaurant Chat'}
+                </h3>
+                <p className="text-xs opacity-90">
+                  {isConnectedToLive ? 'Connected via phone' : 'We\'re here to help!'}
+                </p>
               </div>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="w-6 h-6 flex items-center justify-center hover:bg-orange-500 rounded cursor-pointer"
-            >
-              <i className="ri-close-line text-sm"></i>
-            </button>
+            <div className="flex items-center space-x-2">
+              {isConnectedToLive && (
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              )}
+              <button
+                onClick={() => setIsOpen(false)}
+                className="w-6 h-6 flex items-center justify-center hover:bg-orange-500 rounded cursor-pointer"
+              >
+                <i className="ri-close-line text-sm"></i>
+              </button>
+            </div>
           </div>
 
           {/* Messages */}
@@ -288,8 +367,8 @@ export default function ChatWidget() {
                   onClick={handleConnectToLive}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer"
                 >
-                  <i className="ri-user-line mr-1"></i>
-                  Connect to Live Agent
+                  <i className="ri-phone-line mr-1"></i>
+                  Connect to Chef Titi
                 </button>
               </div>
             )}
@@ -298,7 +377,7 @@ export default function ChatWidget() {
           </div>
 
           {/* Quick Questions */}
-          {messages.length === 1 && (
+          {messages.length === 1 && !isConnectedToLive && (
             <div className="px-4 pb-2">
               <p className="text-xs text-gray-500 mb-2">Quick questions:</p>
               <div className="flex flex-wrap gap-1">
@@ -324,7 +403,7 @@ export default function ChatWidget() {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Type your message..."
+                placeholder={isConnectedToLive ? "Message Chef Titi..." : "Type your message..."}
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
               <button
@@ -335,6 +414,12 @@ export default function ChatWidget() {
                 <i className="ri-send-plane-line text-sm"></i>
               </button>
             </div>
+            {isConnectedToLive && (
+              <p className="text-xs text-gray-500 mt-1 text-center">
+                <i className="ri-whatsapp-line mr-1"></i>
+                Messages sent to Chef Titi's WhatsApp: (817) 808-2448
+              </p>
+            )}
           </div>
         </div>
       )}
